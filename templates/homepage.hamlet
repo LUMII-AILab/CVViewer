@@ -1,4 +1,8 @@
-<h1>_{MsgHello}
+<h1>_{MsgAppTitle}
+
+<form method=get action=@{EntityNameR}>
+  <input name="entityName" type="text" placeholder="Personas vārds">
+  <button>_{MsgBtnSearchEntity}
 
 <ol>
   <li>Now that you have a working project you should use the #
@@ -19,19 +23,6 @@
   <li>
     A Widget's Html, Css and Javascript are separated in three files with the #
     \<em>.hamlet</em>, <em>.lucius</em> and <em>.julius</em> extensions. 
-
-  <li ##{aDomId}>If you had javascript enabled then you wouldn't be seeing this.
-    
-  <li #form>
-    This is an example trivial Form. Read the #
-    \<a href="http://www.yesodweb.com/book/forms">Forms chapter</a> #
-    on the yesod book to learn more about them.
-    $maybe (info,con) <- submission
-      <div .message>
-        Your file's type was <em>#{fileContentType info}</em>. You say it has: <em>#{con}</em>
-    <form method=post action=@{HomeR}#form enctype=#{formEnctype}>
-      ^{formWidget}
-      <input type="submit" value="Send it!">
 
   <li> And last but not least, Testing. In <em>tests/main.hs</em> you will find a #
     test suite that performs tests on this page. #

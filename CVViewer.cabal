@@ -19,6 +19,8 @@ library
                      Settings.StaticFiles
                      Settings.Development
                      Handler.Home
+                     Handler.EntityName
+                     EntityDB
 
     if flag(dev) || flag(library-only)
         cpp-options:   -DDEVELOPMENT
@@ -66,6 +68,8 @@ library
                  , conduit                       >= 1.0
                  , monad-logger                  >= 0.3
                  , fast-logger                   >= 0.3
+                 , containers
+                 , json
 
 executable         CVViewer
     if flag(library-only)
