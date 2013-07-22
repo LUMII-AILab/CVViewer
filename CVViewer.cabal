@@ -70,6 +70,7 @@ library
                  , fast-logger                   >= 0.3
                  , containers
                  , json
+                 , utf8-string
 
 executable         CVViewer
     if flag(library-only)

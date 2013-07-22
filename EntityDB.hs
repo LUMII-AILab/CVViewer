@@ -1,60 +1,33 @@
-{-# LANGUAGE ScopedTypeVariables #-}
-module EntityDB (fetchEntityIDsByName, fetchEntityDataByID) where
+{-# LANGUAGE ScopedTypeVariables, OverloadedStrings #-}
+module EntityDB (fetchEntityIDsByName, fetchEntityDataByID, fetchFrames) where
 
-import Network.Curl
-import Network.Curl.Post
+import Import hiding (Entity, entityID)
+import Network.HTTP.Conduit
+import Data.Conduit
+import Data.ByteString.Lazy.UTF8 (toString, fromString)
 import Data.List
 import Text.JSON
 import Control.Monad
 import Data.Either
-import qualified Data.Map as Map
 
 data Entity = Entity Int Int [String] -- Entity id category names
 	deriving Show
 
+serviceURL :: String
 serviceURL = "http://sps.inside.lv:789/Rest/Semantic/"
+user :: String
 user = "PeterisP"
-
-insertURL = serviceURL ++ "InsertEntity/" ++ user
-getURL = serviceURL ++ "GetEntityDataById/" ++ user
-
---sampleJSON = "{EntityList : [{EntityId : 0,Name : \"Testeris\",OtherName : \"\",OuterId : \"\",Catregory : 0}]}"
---sampleJSON = { "entityNameList": { "EntityNameList": ["Saatčiane I. individuāli praktizējoša zvērināta advokāte"] } }
-
-main = do
-	allEntityIds <- fetchEntityIDsByName [""]
-	allEntityData <- fetchEntityDataByID allEntityIds
-	let names = Map.fromListWith (++) $ concat $ map (\(Entity _ cat names) -> map (\x -> (cat,[x])) names) allEntityData
-	mapM_ writeNames $ Map.toList names
-	putStrLn "Done!"
-
-	--sampleJSON <- readFile "sampleJSON.txt"
-	--putStrLn sampleJSON
-	--answer <- curlPostString getURL sampleJSON
-	--putStrLn answer
-
-writeNames :: (Int, [String]) -> IO ()
-writeNames (category, names) = 
-	writeFile (show category ++ ".txt") $ unlines names
-
-testemall = do
-	testEntityData <- fetchEntityDataByID [1184, 1191, 4351, 5000]
-	putStrLn $ show testEntityData
-	testEntityIds <- fetchEntityIDsByName ["Bondars"]
-	putStrLn $ show testEntityIds
-	testFrames <- fetchFrames [] [0]
-	putStrLn testFrames
 
 -- Fetches all frames matching the supplied lists of entity IDs and frame type IDs
 fetchFrames :: [Int] -> [Int] -> IO String
 fetchFrames entities frametypes = 
-	curlPostString (serviceURL ++ "GetFrame/" ++ user) 
+	postRequest (serviceURL ++ "GetFrame/" ++ user) 
 		("{\"parameterList\":{\"QueryParameters\":[{\"EntityIdList\":[" ++ (formatNumList entities) ++ 
 		 "],\"FrameTypes\": [" ++ (formatNumList frametypes) ++ "]}]}}")
 
 fetchEntityDataByID :: [Int] -> IO [Entity]
 fetchEntityDataByID ids = do
-	json <- curlPostString (serviceURL ++ "GetEntityDataById/" ++ user) 
+	json <- postRequest (serviceURL ++ "GetEntityDataById/" ++ user) 
 		("{\"entityIdList\":{\"DataSet\":[\"AllUsers\"],\"SearchType\":\"AllData\",\"EntityIdList\":["
 		++ (formatNumList ids) ++ "]}}")
 	return $ decodeEntities json
@@ -62,7 +35,7 @@ fetchEntityDataByID ids = do
 -- fetch a list of entity IDs matching the supplied names
 fetchEntityIDsByName :: [String] -> IO [Int]
 fetchEntityIDsByName names = do
-	json <- curlPostString (serviceURL ++ "GetEntityIdByName/" ++ user) 
+	json <- postRequest (serviceURL ++ "GetEntityIdByName/" ++ user) 
 		("{\"entityNameList\":{\"EntityNameList\":[" ++ (formatList names) ++ "]}}")
 	return $ decodeIDs json
 
@@ -71,7 +44,7 @@ decodeIDs :: String -> [Int]
 decodeIDs json =
 	case (decodeAnswers "EntityIdList" json) of
 		Ok answers -> head answers -- FIXME - assumes only one answer
-		Error message -> undefined -- FIXME - no error checking
+		Error _ -> undefined -- FIXME - no error checking
 
 -- decodes the JSON answer with a list of entities
 decodeEntities :: String -> [Entity]
@@ -112,10 +85,13 @@ formatNumList list = concat $ intersperse "," $ map show list
 formatList :: [String] -> String
 formatList list = concat $ intersperse "," $ map (\x -> "\"" ++ x ++ "\"") list
 
--- covering the gap in Haskell curl library - we need a POST statement that gets back the results and sends JSON paramaters
-curlPostString :: String -> String -> IO String
-curlPostString url query = withCurlDo $ do
-	curl <- initialize
-	let options = CurlPostFields [ query ] : CurlHttpHeaders [ "Content-Type: application/json; charset=UTF-8" ] : method_POST 
-	r <- do_curl_ curl url options :: IO CurlResponse
-	return $ respBody r
+postRequest :: String -> String -> IO String
+postRequest url query = runResourceT $ do
+        manager <- liftIO $ newManager def
+        initReq <- liftIO $ parseUrl url
+        let req = initReq {method="POST", requestHeaders=[("Content-Type","application/json")], requestBody = RequestBodyLBS $ fromString query}
+        res <- httpLbs req manager
+        liftIO $ putStrLn $ query
+        liftIO $ putStrLn $ toString $ responseBody res
+        return $ toString $ responseBody res
+	
