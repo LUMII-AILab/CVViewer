@@ -5,3 +5,4 @@
 
 / HomeR GET
 /entities EntityNameR GET
+/entity/#Int EntityFramesR GET

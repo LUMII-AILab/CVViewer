@@ -1,18 +1,27 @@
 module Handler.EntityName where
 
-import Import
+import Import hiding (Entity)
 import EntityDB
 import Data.Text(unpack)
 
-getEntityNameR :: Handler String
+getEntityNameR :: Handler Html
 getEntityNameR = do
     result <- lookupGetParam "entityName"
-    case result of
-        Just name -> liftIO $ formatEntityResults name
-        Nothing -> invalidArgs ["Field 'entityName' expected"]
+    let name = case result of
+            Just x -> x
+            Nothing -> "Mārtiņš Bondars"
+    defaultLayout $ do
+            entities <- liftIO $ formatEntityResults name
+            setTitle $ toHtml name
+            $(widgetFile "entityname")
 
-formatEntityResults :: Text -> IO String
+formatEntityResults :: Text -> IO [(String,Int)]
 formatEntityResults name = do
     ids <- fetchEntityIDsByName [unpack name]
     entities <- fetchEntityDataByID ids
-    return $ show entities
+    return $ map (\(Entity nr _ names) -> (mainName names, nr)) entities
+
+-- non-partial replacement for classic head function
+mainName :: [String] -> String
+mainName (x:_) = x
+mainName _ = ""

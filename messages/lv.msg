@@ -1,2 +1,2 @@
-AppTitle: Personu CV datu demo
+AppTitle: CV demo
 BtnSearchEntity: Meklēt entītiju

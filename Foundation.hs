@@ -73,10 +73,10 @@ instance Yesod App where
         -- you to use normal widget features in default-layout.
 
         pc <- widgetToPageContent $ do
-            $(combineStylesheets 'StaticR
-                [ css_normalize_css
-                , css_bootstrap_css
-                ])
+            addStylesheet $ StaticR css_bootstrap_min_css
+            addStylesheetRemote "http://fonts.googleapis.com/css?family=Ubuntu:400,500,400italic&subset=latin,latin-ext"
+            addScriptRemote "http://code.jquery.com/jquery.js"
+            addScript $ StaticR js_bootstrap_min_js
             $(widgetFile "default-layout")
         giveUrlRenderer $(hamletFile "templates/default-layout-wrapper.hamlet")
 

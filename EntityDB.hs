@@ -1,5 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables, OverloadedStrings #-}
-module EntityDB (fetchEntityIDsByName, fetchEntityDataByID, fetchFrames) where
+module EntityDB (fetchEntityIDsByName, fetchEntityDataByID, fetchFrames, Entity(Entity)) where
 
 import Import hiding (Entity, entityID)
 import Network.HTTP.Conduit
@@ -9,6 +9,8 @@ import Data.List
 import Text.JSON
 import Control.Monad
 import Data.Either
+import Frames
+import qualified Data.Map
 
 data Entity = Entity Int Int [String] -- Entity id category names
 	deriving Show
@@ -19,11 +21,19 @@ user :: String
 user = "PeterisP"
 
 -- Fetches all frames matching the supplied lists of entity IDs and frame type IDs
-fetchFrames :: [Int] -> [Int] -> IO String
-fetchFrames entities frametypes = 
-	postRequest (serviceURL ++ "GetFrame/" ++ user) 
-		("{\"parameterList\":{\"QueryParameters\":[{\"EntityIdList\":[" ++ (formatNumList entities) ++ 
+fetchFrames :: [Int] -> [Int] -> IO [Frame]
+fetchFrames entityIDs frametypes = do
+	json <- postRequest (serviceURL ++ "GetFrame/" ++ user) 
+		("{\"parameterList\":{\"QueryParameters\":[{\"EntityIdList\":[" ++ (formatNumList entityIDs) ++ 
 		 "],\"FrameTypes\": [" ++ (formatNumList frametypes) ++ "]}]}}")
+	let frames = decodeFrames json
+	entities <- fetchEntityDataByID $ mentionedEntities frames
+	return $ map (describeFrame $ entityLookup entities) frames
+
+entityLookup :: [Entity] -> Int -> String
+entityLookup entities entityID = 
+	let table = Data.Map.fromList $ map (\(Entity xentityID _ names) -> (xentityID, head names)) entities
+	in Data.Map.findWithDefault "" entityID table
 
 fetchEntityDataByID :: [Int] -> IO [Entity]
 fetchEntityDataByID ids = do
@@ -62,6 +72,28 @@ decodeEntity json = do
 	names <- valFromObj "OtherName" >=> readJSONs $ json -- reading a JSON array of strings here
 	return $ Entity entityID category (name:names) -- we put the 'official' name as simply the first in list
 
+-- decodes a list of Frames as given by the webservice answers
+decodeFrames :: String -> [RawFrame]
+decodeFrames json = 
+	case (decodeAnswers "FrameData" >=> mapM (readJSONs >=> mapM decodeFrame) $ json) of
+		Ok answers -> concat answers -- FIXME - this concat loses structure of which frames are for which queried item
+		Error message -> error message -- FIXME - no error checking	
+
+decodeFrame :: JSObject JSValue -> Result RawFrame
+decodeFrame json = do
+	frameID <- valFromObj "FrameId" json
+	frameType <- valFromObj "FrameType" json
+	sentenceID <- valFromObj "SentenceId" json
+	source <- valFromObj "Source" json
+	elements <- valFromObj "FrameData" >=> readJSONs >=> mapM decodeFrameElement $ json
+	return $ RawFrame frameID frameType sentenceID source elements
+
+decodeFrameElement :: JSObject JSValue -> Result (Int, Int)
+decodeFrameElement json = do
+	role <- valFromObj "Key" json
+	entity <- valFromObj "Value" >=> valFromObj "Entity" $ json -- ignoring PlaceInSentence field here
+	return (role, entity)
+
 -- decodes JSON answers to a list of separate answers. 
 -- NB! If there are any answers with errorcodes, they will be simply skipped..
 decodeAnswers :: (JSON a) => String -> String -> Result [a]
@@ -87,11 +119,11 @@ formatList list = concat $ intersperse "," $ map (\x -> "\"" ++ x ++ "\"") list
 
 postRequest :: String -> String -> IO String
 postRequest url query = runResourceT $ do
+        liftIO $ putStrLn $ query
         manager <- liftIO $ newManager def
         initReq <- liftIO $ parseUrl url
         let req = initReq {method="POST", requestHeaders=[("Content-Type","application/json")], requestBody = RequestBodyLBS $ fromString query}
-        res <- httpLbs req manager
-        liftIO $ putStrLn $ query
+        res <- httpLbs req manager        
         liftIO $ putStrLn $ toString $ responseBody res
         return $ toString $ responseBody res
 	

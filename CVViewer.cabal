@@ -20,7 +20,9 @@ library
                      Settings.Development
                      Handler.Home
                      Handler.EntityName
+                     Handler.EntityFrames
                      EntityDB
+                     Frames
 
     if flag(dev) || flag(library-only)
         cpp-options:   -DDEVELOPMENT

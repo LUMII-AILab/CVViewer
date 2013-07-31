@@ -12,7 +12,7 @@ $newline never
         <meta name="description" content="">
         <meta name="author" content="">
 
-        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
 
         ^{pageHead pc}
 
@@ -23,12 +23,10 @@ $newline never
         <script>
           document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/,'js');
     <body>
-        <div class="container">
-            <header>
-            <div id="main" role="main">
-              ^{pageBody pc}
-            <footer>
-                #{extraCopyright $ appExtra $ settings master}
+        <div id="wrap">
+            ^{pageBody pc}
+        <footer>
+            #{extraCopyright $ appExtra $ settings master}
 
         $maybe analytics <- extraAnalytics $ appExtra $ settings master
             <script>

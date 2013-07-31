@@ -1,0 +1,5 @@
+<h1>_{MsgAppTitle}
+
+<ul>
+  $forall (mainname, nr) <- entities  
+    <li><a href=@{EntityFramesR nr}>#{mainname} #{nr}
