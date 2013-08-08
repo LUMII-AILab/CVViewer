@@ -1,4 +1,24 @@
 <h1>#{name} <small>(#{nr})</small>
-<ul>
-  $forall (Frame id description frametype sentenceID source elements) <- frames  
+$if not $ null bio
+    <h3>Personas dati, ģimenes stāvoklis
+    <ul>
+      $forall (Frame id description frametype sentenceID source elements) <- bio  
+        <li><span data-toggle="popover" title="#{frametype}, ID: #{id}" data-content="Avots: #{source}<br/>Teikuma ID: #{sentenceID}<br/>#{describeElements elements}">#{description}</span> <span class="glyphicon glyphicon-ok"></span> <span class="glyphicon glyphicon-remove"></span>
+$if not $ null edu
+    <h3>Izglītība
+    <ul>
+      $forall (Frame id description frametype sentenceID source elements) <- edu  
+        <li><span data-toggle="popover" title="#{frametype}, ID: #{id}" data-content="Avots: #{source}<br/>Teikuma ID: #{sentenceID}<br/>#{describeElements elements}">#{description}</span> <span class="glyphicon glyphicon-ok"></span> <span class="glyphicon glyphicon-remove"></span>
+$if not $ null win
+    <h3>Sasniegumi
+    <ul>
+      $forall (Frame id description frametype sentenceID source elements) <- win 
+        <li><span data-toggle="popover" title="#{frametype}, ID: #{id}" data-content="Avots: #{source}<br/>Teikuma ID: #{sentenceID}<br/>#{describeElements elements}">#{description}</span> <span class="glyphicon glyphicon-ok"></span> <span class="glyphicon glyphicon-remove"></span>
+$if not $ null work
+    <h3>Karjera
+    <ul>
+      $forall (Frame id description frametype sentenceID source elements) <- work
+        <li><span data-toggle="popover" title="#{frametype}, ID: #{id}" data-content="Avots: #{source}<br/>Teikuma ID: #{sentenceID}<br/>#{describeElements elements}">#{description}</span> <span class="glyphicon glyphicon-ok"></span> <span class="glyphicon glyphicon-remove"></span>
+<ul style="display:none">
+  $forall (Frame id description frametype sentenceID source elements) <- others
     <li><span data-toggle="popover" title="#{frametype}, ID: #{id}" data-content="Avots: #{source}<br/>Teikuma ID: #{sentenceID}<br/>#{describeElements elements}">#{description}</span>

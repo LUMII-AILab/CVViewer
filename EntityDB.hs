@@ -10,6 +10,7 @@ import Text.JSON
 import Control.Monad
 import Data.Either
 import Frames
+import System.IO
 import qualified Data.Map
 
 data Entity = Entity Int Int [String] -- Entity id category names
@@ -120,10 +121,12 @@ formatList list = concat $ intersperse "," $ map (\x -> "\"" ++ x ++ "\"") list
 postRequest :: String -> String -> IO String
 postRequest url query = runResourceT $ do
         liftIO $ putStrLn $ query
+        liftIO $ hFlush stdout
         manager <- liftIO $ newManager def
         initReq <- liftIO $ parseUrl url
-        let req = initReq {method="POST", requestHeaders=[("Content-Type","application/json")], requestBody = RequestBodyLBS $ fromString query}
+        let req = initReq {method="POST", responseTimeout = Just 9000000, requestHeaders=[("Content-Type","application/json")], requestBody = RequestBodyLBS $ fromString query}
         res <- httpLbs req manager        
         liftIO $ putStrLn $ toString $ responseBody res
+        liftIO $ hFlush stdout
         return $ toString $ responseBody res
 	

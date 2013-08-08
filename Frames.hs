@@ -2,11 +2,12 @@
 module Frames (RawFrame(RawFrame), Frame(Frame), Element, describeFrame, mentionedEntities) where
 
 import Import hiding (entityID)
-import Data.List (nub)
+import Data.List (nub, intersperse, isPrefixOf)
 import Data.Maybe
 
 data RawFrame = RawFrame Int Int String String [(Int, Int)] -- id frametype sentenceID source [(role, entity)]
 data Frame = Frame Int String String String String [Element] -- id description frametype sentenceID source elements
+	deriving Eq
 type Element = (Int, String, Int, String) -- [roleID, role, entityID, entity]
 
 -- describes a frame
@@ -36,13 +37,39 @@ fetchElement ((role, _, _, entity):xs) neededRole =
 
 -- the same, but with a default value of ""
 fetchElement_ :: [Element] -> Int -> String
-fetchElement_ elements role = fromMaybe "" $ fetchElement elements role
+fetchElement_ elements role = replaceAll (fromMaybe "" $ fetchElement elements role) replacements
+
+replacements = [
+	("trešdiena vakars", "trešdienas vakarā"),
+	("Tukums 1. vidusskola", "Tukuma 1. vidusskolu"),
+	("maijs", "maijā"),
+	("gads", "gadā"),
+	(">", ""),
+	("augsts literārs kurss", "augstākos literāros kursus"),
+	("un Goda diplomu", "Goda diplomu"),
+	("Latvija vēsture un filoloģija fakultāte", "Latvijas vēstures un filoloģijas fakultāti"),
+	("tauta dzejnieks gods nosaukums", "tautas dzejnieka goda nosaukumu"),
+	("arī 1991. gadā barikāde dalībnieks piemiņa zīme", "1991. gada barikāžu dalībnieka piemiņas zīmi"),
+	("2. šķira trīs zvaigzne ordenis", "2. šķiras trīs zvaigžņu ordeni"),
+	("ministrs kabinets balva par mūžs ieguldījums latvietis kultūra un izcils veikums latvietis literatūra", "MK balvu par mūža ieguldījumu latviešu kultūrā"),
+	("starptautiska atzinība Hanss Kristians Andersens vārds nosaukt pasaka meistars diploms", "Hansa Kristiana Andersena vārdā nosaukto pasaku meistara diplomu"),
+	("nopelns bagāts kultūra darbinieks nosaukums", "nopelniem bagātā kultūras darbinieka nosaukumu"),
+	("jūrmala 1. vidusskola", "Jūrmalas 1. vidusskolā"),
+	("Latvija kultūra fonds", "Latvijas kultūras fondā"),
+	("skolotājs", "skolotāju"),
+	("sekretārs", "sekretāru"),
+	("priekšsēdētājs", "priekšsēdētāju"),
+	("padomnieks", "padomnieku"),
+	("būt AP tauta izglītība", "bijis tautas izglītības AP"),
+	("Latvija tēls veidošana institūts", "Latvijas tēla veidošanas institūtā"),
+	("Rīga apriņķis sloka pagasts Ragaciems", "Rīgas apriņķa Slokas pagasta Ragaciemā")]
 
 type FrameTypeDescriber = [Element] -> String -- TODO - uz html? lai entītijas ir kā korekti urļi
 -- gets the decoding function for each frame type
 getDescriber :: Int -> FrameTypeDescriber
 getDescriber frameTypeID = case frameTypeID of
 			0 -> describeBirth -- dzimšana
+			2 -> describeDeath -- miršana
 			3 -> describeRelations -- attiecības
 			6 -> describeEducation -- izglītība
 			7 -> describeVocation -- nodarbošanās
@@ -50,6 +77,7 @@ getDescriber frameTypeID = case frameTypeID of
 			10 -> describeEmploymentStart -- darba sākums
 			11 -> describeEmploymentEnd -- darba beigas
 			13 -> describeElections -- vēlēšanas
+			22 -> describeAchievement -- sasniegums
 			x -> describeDefault x -- fallthrough
 
 describeBirth :: FrameTypeDescriber
@@ -58,16 +86,26 @@ describeBirth elements = let
 	vieta = fetchElement_ elements 3
 	in "dzimis " ++ laiks ++ " " ++ vieta
 
+describeDeath :: FrameTypeDescriber
+describeDeath elements = let
+	laiks = fetchElement_ elements 2
+	vieta = fetchElement_ elements 3
+	in "miris " ++ laiks ++ " " ++ vieta	
+
 describeRelations :: FrameTypeDescriber
 describeRelations elements = let
 	partneris = fetchElement_ elements 2
 	attiecības = fetchElement_ elements 4
-	in "ir " ++ partneris ++ " " ++ attiecības
+	in attiecības ++ ": " ++ partneris
 
 describeEducation :: FrameTypeDescriber
 describeEducation elements = let
 	iestāde = fetchElement_ elements 2
-	in "studējis " ++ iestāde
+	grāds = fetchElement_ elements 4
+	laiks = fetchElement_ elements 5
+	in if not (null grāds)
+		then laiks ++ " ieguvis " ++ grāds ++ " " ++ iestāde
+		else laiks ++ " pabeidzis " ++ iestāde
 
 describeVocation :: FrameTypeDescriber
 describeVocation elements = let
@@ -79,7 +117,13 @@ describeEmployment elements = let
 	darbavieta = fetchElement_ elements 2
 	amats = fetchElement_ elements 3
 	laiks = fetchElement_ elements 6	
-	in laiks ++ " strādājis " ++ darbavieta ++ " par " ++ amats
+	statuss = fetchElement_ elements 7
+	sākums = fetchElement_ elements 8
+	in if not (null statuss) -- FIXME - uz guardiem
+		then statuss ++ " " ++ amats
+		else if not (null sākums) 
+			then "No " ++ sākums ++ " bijis " ++ amats ++ " " ++ darbavieta
+			else laiks ++ " strādājis " ++ darbavieta ++ " par " ++ amats
 
 describeEmploymentStart :: FrameTypeDescriber
 describeEmploymentStart elements = let
@@ -102,13 +146,18 @@ describeElections elements = let
 	laiks = fetchElement_ elements 6
 	in laiks ++ " " ++ rezultāts ++ " piedalījies " ++ vēlēšanas
 
+describeAchievement :: FrameTypeDescriber
+describeAchievement elements = let
+	balva = fetchElement_ elements 2 -- FIXME - atkarīgs no sasnieguma veida
+	laiks = fetchElement_ elements 6
+	in laiks ++ " saņēmis " ++ balva
 
 describeDefault :: Int -> FrameTypeDescriber
 describeDefault frameTypeID elements = (frameTypes !! frameTypeID) ++ " - " ++ (describeElements elements)
 
 describeElements :: [Element] -> String
 describeElements =
- concat . map (\(_,role,entityID, entity) -> role ++ ": " ++ entity ++ "; ")
+ concat . map (\(_,role,entityID, entity) -> role ++ ": " ++ (replaceOne "<" "" entity) ++ "; ")
 
 -- Lists all entity IDs mentioned in this list of frames
 mentionedEntities :: [RawFrame] -> [Int]
@@ -175,3 +224,40 @@ frameTypes = [
 	"Publisks iepirkums",
 	"Zīmols"]
 
+-- String replace - call as:
+-- replace somestring [("a","b")]
+replaceAll = foldr (uncurry replaceOne)
+
+-- FIXME - copypasta from MissingH
+replaceOne :: Eq a => [a] -> [a] -> [a] -> [a]
+replaceOne old new l = join new . split old $ l
+
+split :: Eq a => [a] -> [a] -> [[a]]
+split _ [] = []
+split delim str =
+    let (firstline, remainder) = breakList (startswith delim) str
+        in 
+        firstline : case remainder of
+                                   [] -> []
+                                   x -> if x == delim
+                                        then [] : []
+                                        else split delim 
+                                                 (drop (length delim) x)
+
+join :: [a] -> [[a]] -> [a]
+join delim l = concat (intersperse delim l)
+
+breakList :: ([a] -> Bool) -> [a] -> ([a], [a])
+breakList func = spanList (not . func)
+
+startswith :: Eq a => [a] -> [a] -> Bool
+startswith = isPrefixOf
+
+spanList :: ([a] -> Bool) -> [a] -> ([a], [a])
+
+spanList _ [] = ([],[])
+spanList func list@(x:xs) =
+    if func list
+       then (x:ys,zs)
+       else ([],list)
+    where (ys,zs) = spanList func xs

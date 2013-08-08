@@ -74,6 +74,7 @@ instance Yesod App where
 
         pc <- widgetToPageContent $ do
             addStylesheet $ StaticR css_bootstrap_min_css
+            addStylesheet $ StaticR css_bootstrap_glyphicons_css
             addStylesheetRemote "http://fonts.googleapis.com/css?family=Ubuntu:400,500,400italic&subset=latin,latin-ext"
             addScriptRemote "http://code.jquery.com/jquery.js"
             addScript $ StaticR js_bootstrap_min_js

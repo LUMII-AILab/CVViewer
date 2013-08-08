@@ -35,6 +35,13 @@ body {
   font-weight: 500; 
 }
 
+.glyphicon-ok {
+  color: green;
+}
+
+.glyphicon-remove {
+  color: red;
+}
 
 /* Sticky footer styles
 -------------------------------------------------- */

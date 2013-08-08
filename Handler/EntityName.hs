@@ -9,7 +9,7 @@ getEntityNameR = do
     result <- lookupGetParam "entityName"
     let name = case result of
             Just x -> x
-            Nothing -> "Mārtiņš Bondars"
+            Nothing -> "Imants Ziedonis"
     defaultLayout $ do
             entities <- liftIO $ formatEntityResults name
             setTitle $ toHtml name
@@ -17,7 +17,8 @@ getEntityNameR = do
 
 formatEntityResults :: Text -> IO [(String,Int)]
 formatEntityResults name = do
-    ids <- fetchEntityIDsByName [unpack name]
+    ids <- if (name == "Imants Ziedonis") then return [250423, 274418] -- FIXME - temporary hack
+        else fetchEntityIDsByName [unpack name]
     entities <- fetchEntityDataByID ids
     return $ map (\(Entity nr _ names) -> (mainName names, nr)) entities
 
