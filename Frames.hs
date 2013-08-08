@@ -43,6 +43,8 @@ replacements = [
 	("trešdiena vakars", "trešdienas vakarā"),
 	("Tukums 1. vidusskola", "Tukuma 1. vidusskolu"),
 	("maijs", "maijā"),
+	("decembris", "decembrī"),
+	("augusts", "augusta"),
 	("gads", "gadā"),
 	(">", ""),
 	("augsts literārs kurss", "augstākos literāros kursus"),
@@ -60,8 +62,12 @@ replacements = [
 	("sekretārs", "sekretāru"),
 	("priekšsēdētājs", "priekšsēdētāju"),
 	("padomnieks", "padomnieku"),
+	("Latvija krājbanka", "Latvijas Krājbankā"),
 	("būt AP tauta izglītība", "bijis tautas izglītības AP"),
+	("būt", "bijis par"),
 	("Latvija tēls veidošana institūts", "Latvijas tēla veidošanas institūtā"),
+	("Hārvards universitāte", "Hārvardas universitāti"),
+	("valsts prezidente kanceleja vadītāju", "Valsts prezidentes kancelejas vadītājs"),
 	("Rīga apriņķis sloka pagasts Ragaciems", "Rīgas apriņķa Slokas pagasta Ragaciemā")]
 
 type FrameTypeDescriber = [Element] -> String -- TODO - uz html? lai entītijas ir kā korekti urļi
@@ -120,7 +126,9 @@ describeEmployment elements = let
 	statuss = fetchElement_ elements 7
 	sākums = fetchElement_ elements 8
 	in if not (null statuss) -- FIXME - uz guardiem
-		then statuss ++ " " ++ amats
+		then if not (null darbavieta)
+			then statuss ++ " " ++ darbavieta ++ " " ++ amats
+			else statuss ++ " " ++ amats
 		else if not (null sākums) 
 			then "No " ++ sākums ++ " bijis " ++ amats ++ " " ++ darbavieta
 			else laiks ++ " strādājis " ++ darbavieta ++ " par " ++ amats
@@ -130,7 +138,9 @@ describeEmploymentStart elements = let
 	darbavieta = fetchElement_ elements 2
 	amats = fetchElement_ elements 3
 	laiks = fetchElement_ elements 7
-	in laiks ++ " strādājis " ++ darbavieta ++ " par " ++ amats
+	in if not (null laiks) 
+		then "No " ++ laiks ++ " strādājis " ++ darbavieta ++ " par " ++ amats
+		else "Strādājis " ++ darbavieta ++ " par " ++ amats
 
 describeEmploymentEnd :: FrameTypeDescriber
 describeEmploymentEnd elements = let
