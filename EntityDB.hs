@@ -70,13 +70,13 @@ decodeEntity json = do
 	name <- valFromObj "Name" json
 	entityID <- valFromObj "EntityId" json
 	category <- valFromObj "Category" json
-	names <- valFromObj "OtherName" >=> readJSONs $ json -- reading a JSON array of strings here
+	names <- valFromObj "OtherName" >=> readJSONsSafe  $ json -- reading a JSON array of strings here
 	return $ Entity entityID category (name:names) -- we put the 'official' name as simply the first in list
 
 -- decodes a list of Frames as given by the webservice answers
 decodeFrames :: String -> [RawFrame]
 decodeFrames json = 
-	case (decodeAnswers "FrameData" >=> mapM (readJSONs >=> mapM decodeFrame) $ json) of
+	case (decodeAnswers "FrameData" >=> mapM (readJSONsSafe >=> mapM decodeFrame) $ json) of
 		Ok answers -> concat answers -- FIXME - this concat loses structure of which frames are for which queried item
 		Error message -> error message -- FIXME - no error checking	
 
@@ -85,8 +85,8 @@ decodeFrame json = do
 	frameID <- valFromObj "FrameId" json
 	frameType <- valFromObj "FrameType" json
 	sentenceID <- valFromObj "SentenceId" json
-	source <- valFromObj "Source" json
-	elements <- valFromObj "FrameData" >=> readJSONs >=> mapM decodeFrameElement $ json
+	source <- valFromObjDefault "Source" json ""
+	elements <- valFromObj "FrameData" >=> readJSONsSafe >=> mapM decodeFrameElement $ json
 	return $ RawFrame frameID frameType sentenceID source elements
 
 decodeFrameElement :: JSObject JSValue -> Result (Int, Int)
@@ -100,7 +100,7 @@ decodeFrameElement json = do
 decodeAnswers :: (JSON a) => String -> String -> Result [a]
 decodeAnswers resultFieldName json = 
 	case (decode json) of
-		Ok answers -> (liftM rights) ( (valFromObj "Answers") >=> readJSONs >=> mapM (decodeAnswer resultFieldName) $ answers)
+		Ok answers -> (liftM rights) ( (valFromObj "Answers") >=> readJSONsSafe >=> mapM (decodeAnswer resultFieldName) $ answers)
 		Error message -> Error message
 
 decodeAnswer :: (JSON a) => String -> JSObject JSValue -> Result (Either String a)
@@ -124,9 +124,21 @@ postRequest url query = runResourceT $ do
         liftIO $ hFlush stdout
         manager <- liftIO $ newManager def
         initReq <- liftIO $ parseUrl url
-        let req = initReq {method="POST", responseTimeout = Just 9000000, requestHeaders=[("Content-Type","application/json")], requestBody = RequestBodyLBS $ fromString query}
+        let req = initReq {method="POST", responseTimeout = Just 60000000, requestHeaders=[("Content-Type","application/json")], requestBody = RequestBodyLBS $ fromString query}
         res <- httpLbs req manager        
         liftIO $ putStrLn $ toString $ responseBody res
         liftIO $ hFlush stdout
         return $ toString $ responseBody res
-	
+
+-- If element is not found, return the default value silently.
+valFromObjDefault :: JSON a => String -> JSObject JSValue -> a -> Result a
+valFromObjDefault key json defVal = 
+	let v = valFromObj key json in
+	case v of
+		Ok _ -> v
+		Error _ -> Ok defVal
+
+-- readJSONs fails with critical error if the element doesn't contain a list. Needs a pull request to Text.JSON?
+readJSONsSafe :: JSON a => JSValue -> Result [a]
+readJSONsSafe (JSArray as) = mapM readJSON as
+readJSONsSafe _ = Ok [] -- Fixme - no error message "Unable to read list"..
