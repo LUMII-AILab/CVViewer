@@ -14,8 +14,10 @@ type Element = (Int, String, Int, String) -- [roleID, role, entityID, entity]
 -- FIXME - aprakstam jābūt atkarīgam no 'fokusa' entītijas; kā arī tad vajag iekļaut ne visus freimus varbūt..
 describeFrame :: (Int -> String) -> RawFrame -> Frame
 describeFrame entityLookup (RawFrame frameID frameTypeID sentenceID source rawelements) =
-	let 
-		frameType = frameTypes !! frameTypeID -- TODO - validācija
+	let 		
+		frameType = if frameTypeID < length frameTypes
+			then frameTypes !! frameTypeID
+			else error "Bad frame type ID " ++ show frameTypeID -- TODO - graceful fail
 		elements = map (\(role, entityID) -> (role, fetchRole frameTypeID role, entityID, entityLookup entityID)) rawelements
 		description = (getDescriber frameTypeID) elements
 	in Frame frameID description frameType sentenceID source elements
@@ -26,7 +28,7 @@ fetchRole frame role =
 	if (frame >= length frameTypes) then "Bad frame type ID " ++ show frame
 	else let roles = frameRoles !! frame
 		in if (role > length roles) then "Bad role ID " ++ show role ++ " in frame " ++ show frame
-			else roles !! (role-1)
+			else roles !! (role-1) -- FIXME - te ir -1 vai 0 atkarībā no kā tad Mārtiņš beigās uztaisa lomu indeksus, 0based vai 1based
 
 -- tries to find entity for the requested role
 fetchElement :: [Element] -> Int -> Maybe String
@@ -39,6 +41,7 @@ fetchElement ((role, _, _, entity):xs) neededRole =
 fetchElement_ :: [Element] -> Int -> String
 fetchElement_ elements role = replaceAll (fromMaybe "" $ fetchElement elements role) replacements
 
+replacements :: [(String, String)]
 replacements = [
 	("trešdiena vakars", "trešdienas vakarā"),
 	("Tukums 1. vidusskola", "Tukuma 1. vidusskolu"),
@@ -167,7 +170,7 @@ describeDefault frameTypeID elements = (frameTypes !! frameTypeID) ++ " - " ++ (
 
 describeElements :: [Element] -> String
 describeElements =
- concat . map (\(_,role,entityID, entity) -> role ++ ": " ++ (replaceOne "<" "" entity) ++ "; ")
+ concat . map (\(_,role,_, entity) -> role ++ ": " ++ (replaceOne "<" "" entity) ++ "; ")
 
 -- Lists all entity IDs mentioned in this list of frames
 mentionedEntities :: [RawFrame] -> [Int]
@@ -236,6 +239,7 @@ frameTypes = [
 
 -- String replace - call as:
 -- replace somestring [("a","b")]
+replaceAll :: Eq a => [a] -> [([a],[a])] -> [a]
 replaceAll = foldr (uncurry replaceOne)
 
 -- FIXME - copypasta from MissingH
