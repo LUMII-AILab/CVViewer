@@ -11,7 +11,7 @@ getEntityFramesR nr = do
     entities <- liftIO $ fetchEntityDataByID [nr]
     let name = entityName entities
     frames2 <- liftIO $ fetchFrames [nr] []
-    let frames = filter (\(Frame x _ _ _ _ _) -> notElem x [26164,63883, 26163, 26175, 26254, 45336]) frames2 --FIXME- jālabo šo freimu attēlošana un jāliek atpakaļ
+    let frames = filter (\(Frame x _ _ _ _ _ _) -> notElem x [26164,63883, 26163, 26175, 26254, 45336]) frames2 --FIXME- jālabo šo freimu attēlošana un jāliek atpakaļ
     let bio = filterFrames ["Dzimšana","Miršana", "Attiecības"] frames
     let edu = filterFrames ["Izglītība"] frames
     let win = filterFrames ["Sasniegums"] frames
@@ -30,4 +30,4 @@ describeElements =
  map (\(_,role,entityID, entity) -> preEscapedToMarkup $ "<br/>" ++ role ++ ": " ++ entity ++ "(" ++ show entityID ++ ")")
 
 filterFrames :: [String] -> [Frame] -> [Frame]
-filterFrames frameTypes = filter (\(Frame _ _ x _ _ _) -> elem x frameTypes)
+filterFrames frameTypes = filter (\(Frame _ _ x _ _ _ _) -> elem x frameTypes)

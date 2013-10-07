@@ -24,7 +24,7 @@ user = "PeterisP"
 -- Fetches all frames matching the supplied lists of entity IDs and frame type IDs
 fetchFrames :: [Int] -> [Int] -> IO [Frame]
 fetchFrames entityIDs frametypes = do
-	json <- postRequest (serviceURL ++ "GetFrame/" ++ user) 
+	json <- postRequest (serviceURL ++ "GetFramePg/" ++ user) 
 		("{\"parameterList\":{\"QueryParameters\":[{\"EntityIdList\":[" ++ (formatNumList entityIDs) ++ 
 		 "],\"FrameTypes\": [" ++ (formatNumList frametypes) ++ "]}]}}")
 	let frames = decodeFrames json
@@ -38,7 +38,7 @@ entityLookup entities entityID =
 
 fetchEntityDataByID :: [Int] -> IO [Entity]
 fetchEntityDataByID ids = do
-	json <- postRequest (serviceURL ++ "GetEntityDataById/" ++ user) 
+	json <- postRequest (serviceURL ++ "GetEntityDataByIdPg/" ++ user) 
 		("{\"entityIdList\":{\"DataSet\":[\"AllUsers\"],\"SearchType\":\"AllData\",\"EntityIdList\":["
 		++ (formatNumList ids) ++ "]}}")
 	return $ decodeEntities json
@@ -46,7 +46,7 @@ fetchEntityDataByID ids = do
 -- fetch a list of entity IDs matching the supplied names
 fetchEntityIDsByName :: [String] -> IO [Int]
 fetchEntityIDsByName names = do
-	json <- postRequest (serviceURL ++ "GetEntityIdByName/" ++ user) 
+	json <- postRequest (serviceURL ++ "GetEntityIdByNamePg/" ++ user) 
 		("{\"entityNameList\":{\"EntityNameList\":[" ++ (formatList names) ++ "]}}")
 	return $ decodeIDs json
 
@@ -85,9 +85,10 @@ decodeFrame json = do
 	frameID <- valFromObj "FrameId" json
 	frameType <- valFromObj "FrameType" json
 	sentenceID <- valFromObj "SentenceId" json
-	source <- valFromObjDefault "Source" json ""
+	source <- valFromObjDefault "SourceId" json ""
+	document <- valFromObjDefault "DocumentId" json ""
 	elements <- valFromObj "FrameData" >=> readJSONsSafe >=> mapM decodeFrameElement $ json
-	return $ RawFrame frameID frameType sentenceID source elements
+	return $ RawFrame frameID frameType sentenceID source document elements
 
 decodeFrameElement :: JSObject JSValue -> Result (Int, Int)
 decodeFrameElement json = do
