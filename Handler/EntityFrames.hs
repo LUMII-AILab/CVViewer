@@ -7,10 +7,17 @@ import Frames
 import Data.List ( (\\) )
 
 getEntityFramesR :: Int -> Handler Html
-getEntityFramesR nr = do
+getEntityFramesR = _getEntityFramesR True
+
+getEntityRawFramesR :: Int -> Handler Html
+getEntityRawFramesR = _getEntityFramesR False
+
+_getEntityFramesR :: Bool -> Int -> Handler Html
+_getEntityFramesR summary nr = do
     entities <- liftIO $ fetchEntityDataByID [nr]
     let name = entityName entities
-    frames2 <- liftIO $ fetchSummaryFrames [nr] []
+    frames2 <- liftIO $ if summary then fetchSummaryFrames [nr] []
+                                   else fetchFrames [nr] []
     let frames = filter (\(Frame x _ _ _ _ _ _) -> notElem x [26164,63883, 26163, 26175, 26254, 45336]) frames2 --FIXME- jālabo šo freimu attēlošana un jāliek atpakaļ
     let bio = filterFrames ["Dzimšana","Miršana", "Attiecības"] frames
     let edu = filterFrames ["Izglītība"] frames
