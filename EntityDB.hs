@@ -1,5 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables, OverloadedStrings #-}
-module EntityDB (fetchEntityIDsByName, fetchEntityDataByID, fetchFrames, Entity(Entity)) where
+module EntityDB (fetchEntityIDsByName, fetchEntityDataByID, fetchFrames, fetchSummaryFrames, Entity(Entity)) where
 
 import Import hiding (Entity, entityID)
 import Network.HTTP.Conduit
@@ -25,6 +25,17 @@ user = "PeterisP"
 fetchFrames :: [Int] -> [Int] -> IO [Frame]
 fetchFrames entityIDs frametypes = do
 	json <- postRequest (serviceURL ++ "GetFramePg/" ++ user) 
+		("{\"parameterList\":{\"QueryParameters\":[{\"EntityIdList\":[" ++ (formatNumList entityIDs) ++ 
+		 "],\"FrameTypes\": [" ++ (formatNumList frametypes) ++ "]}]}}")
+	let frames = decodeFrames json
+	entities <- fetchEntityDataByID $ mentionedEntities frames
+	return $ map (describeFrame $ entityLookup entities) frames
+
+-- The same but for summary frames
+-- FIXME - DRY
+fetchSummaryFrames :: [Int] -> [Int] -> IO [Frame]
+fetchSummaryFrames entityIDs frametypes = do
+	json <- postRequest (serviceURL ++ "GetSummaryFramePg/" ++ user) 
 		("{\"parameterList\":{\"QueryParameters\":[{\"EntityIdList\":[" ++ (formatNumList entityIDs) ++ 
 		 "],\"FrameTypes\": [" ++ (formatNumList frametypes) ++ "]}]}}")
 	let frames = decodeFrames json
