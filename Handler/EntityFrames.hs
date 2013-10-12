@@ -18,12 +18,13 @@ _getEntityFramesR summary nr = do
     let name = entityName entities
     frames2 <- liftIO $ if summary then fetchSummaryFrames [nr] []
                                    else fetchFrames [nr] []
-    let frames = filter (\(Frame x _ _ _ _ _ _) -> notElem x [26164,63883, 26163, 26175, 26254, 45336]) frames2 --FIXME- jālabo šo freimu attēlošana un jāliek atpakaļ
+    let frames = filter (\(Frame x _ _ _ _ _ _ _) -> notElem x [26164,63883, 26163, 26175, 26254, 45336]) frames2 --FIXME- jālabo šo freimu attēlošana un jāliek atpakaļ
     let bio = filterFrames ["Dzimšana","Miršana", "Attiecības"] frames
     let edu = filterFrames ["Izglītība"] frames
     let win = filterFrames ["Sasniegums"] frames
     let work = filterFrames ["Amats", "Darba sākums", "Darba beigas"] frames
     let others = frames \\ (bio ++ edu ++ win ++ work)
+    let sections = [(bio, "Personas dati, ģimenes stāvoklis"), (edu, "Izglīība"), (win, "Sasniegumi"), (work, "Karjera"), (others, "")] :: [([Frame], String)]
     --liftIO $ putStrLn $ show $ (\(Frame _ _ _ _ _ x) -> x) $ bio !! 0
     --liftIO $ mapM_ (\(Frame _ _ _ _ _ x) -> putStrLn $ concat $ map (\(_,role,entityID, entity) -> "<br/>" ++ role ++ ": " ++ entity ++ "(" ++ show entityID ++ ")") x) bio
     defaultLayout $(widgetFile "entityframes")
@@ -37,4 +38,4 @@ describeElements =
  map (\(_,role,entityID, entity) -> preEscapedToMarkup $ "<br/>" ++ role ++ ": " ++ entity ++ "(" ++ show entityID ++ ")")
 
 filterFrames :: [String] -> [Frame] -> [Frame]
-filterFrames frameTypes = filter (\(Frame _ _ x _ _ _ _) -> elem x frameTypes)
+filterFrames frameTypes = filter (\(Frame _ _ x _ _ _ _ _) -> elem x frameTypes)

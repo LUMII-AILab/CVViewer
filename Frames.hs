@@ -5,22 +5,22 @@ import Import hiding (entityID)
 import Data.List (nub, intersperse, isPrefixOf)
 import Data.Maybe
 
-data RawFrame = RawFrame Int Int String String String [(Int, Int)] -- id frametype sentenceID source document [(role, entity)]
-data Frame = Frame Int String String String String String [Element] -- id description frametype sentenceID source document elements
+data RawFrame = RawFrame Int Int String String String String [(Int, Int)] -- id frametype sentenceID source document frametext [(role, entity)]
+data Frame = Frame Int String String String String String String [Element] -- id description frametype sentenceID source document frametext elements
 	deriving Eq
 type Element = (Int, String, Int, String) -- [roleID, role, entityID, entity]
 
 -- describes a frame
 -- FIXME - aprakstam jābūt atkarīgam no 'fokusa' entītijas; kā arī tad vajag iekļaut ne visus freimus varbūt..
 describeFrame :: (Int -> String) -> RawFrame -> Frame
-describeFrame entityLookup (RawFrame frameID frameTypeID sentenceID source document rawelements) =
+describeFrame entityLookup (RawFrame frameID frameTypeID sentenceID source document frametext rawelements) =
 	let 		
 		frameType = if frameTypeID < length frameTypes
 			then frameTypes !! frameTypeID
 			else error "Bad frame type ID " ++ show frameTypeID -- TODO - graceful fail
 		elements = map (\(role, entityID) -> (role, fetchRole frameTypeID role, entityID, entityLookup entityID)) rawelements
 		description = (getDescriber frameTypeID) elements
-	in Frame frameID description frameType sentenceID source document elements
+	in Frame frameID description frameType sentenceID source document (if frametext=="" then "Auto: "++description else frametext) elements
 
 -- fetch the role name from IDs, including boundary checks
 fetchRole :: Int -> Int -> String
@@ -175,7 +175,7 @@ describeElements =
 -- Lists all entity IDs mentioned in this list of frames
 mentionedEntities :: [RawFrame] -> [Int]
 mentionedEntities frames =
-	nub $ concat $ map (\(RawFrame _ _ _ _ _ elements) -> map snd elements) frames
+	nub $ concat $ map (\(RawFrame _ _ _ _ _ _ elements) -> map snd elements) frames
 
 -- TODO - lasīt no faila, Template Haskell ?
 -- pagaidām no frames.xls ar formulām

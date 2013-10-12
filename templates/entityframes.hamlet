@@ -1,24 +1,8 @@
 <h1>#{name} <small>(#{nr})</small>
-$if not $ null bio
-    <h3>Personas dati, ģimenes stāvoklis
-    <ul>
-      $forall (Frame id description frametype sentenceID source document elements) <- bio  
-        <li><span data-toggle="popover" title="#{frametype}, ID: #{id}" data-content="Avots: #{source}<br/>Dokuments: #{document}<br/>Teikuma ID: #{sentenceID}<br/>#{describeElements elements}">#{description}</span> <span class="glyphicon glyphicon-ok"></span> <span class="glyphicon glyphicon-remove"></span>
-$if not $ null edu
-    <h3>Izglītība
-    <ul>
-      $forall (Frame id description frametype sentenceID source document elements) <- edu  
-        <li><span data-toggle="popover" title="#{frametype}, ID: #{id}" data-content="Avots: #{source}<br/>Dokuments: #{document}<br/>Teikuma ID: #{sentenceID}<br/>#{describeElements elements}">#{description}</span> <span class="glyphicon glyphicon-ok"></span> <span class="glyphicon glyphicon-remove"></span>
-$if not $ null win
-    <h3>Sasniegumi
-    <ul>
-      $forall (Frame id description frametype sentenceID source document elements) <- win 
-        <li><span data-toggle="popover" title="#{frametype}, ID: #{id}" data-content="Avots: #{source}<br/>Dokuments: #{document}<br/>Teikuma ID: #{sentenceID}<br/>#{describeElements elements}">#{description}</span> <span class="glyphicon glyphicon-ok"></span> <span class="glyphicon glyphicon-remove"></span>
-$if not $ null work
-    <h3>Karjera
-    <ul>
-      $forall (Frame id description frametype sentenceID source document elements) <- work
-        <li><span data-toggle="popover" title="#{frametype}, ID: #{id}" data-content="Avots: #{source}<br/>Dokuments: #{document}<br/>Teikuma ID: #{sentenceID}<br/>#{describeElements elements}">#{description}</span> <span class="glyphicon glyphicon-ok"></span> <span class="glyphicon glyphicon-remove"></span>
-<ul style="display:none">
-  $forall (Frame id description frametype sentenceID source document elements) <- others
-    <li><span data-toggle="popover" title="#{frametype}, ID: #{id}" data-content="Avots: #{source}<br/>Dokuments: #{document}<br/>Teikuma ID: #{sentenceID}<br/>#{describeElements elements}">#{description}</span>
+
+$forall (section_frames, title) <- sections
+    $if not $ null section_frames
+        <h3>#{title}
+        <ul>
+          $forall (Frame id description frametype sentenceID source document frametext elements) <- section_frames
+            <li><span data-toggle="popover" title="#{frametype}, ID: #{id}" data-content="Avots: #{source}<br/>Dokuments: #{document}<br/>Teikuma ID: #{sentenceID}<br/>#{describeElements elements}<br/>#{description}"><a href="http://www.leta.lv/press_releases/#{document}">#{frametext}</a></span> <span class="glyphicon glyphicon-ok"></span> <span class="glyphicon glyphicon-remove"></span>

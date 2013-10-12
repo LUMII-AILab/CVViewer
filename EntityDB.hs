@@ -98,8 +98,9 @@ decodeFrame json = do
 	sentenceID <- valFromObj "SentenceId" json
 	source <- valFromObjDefault "SourceId" json ""
 	document <- valFromObjDefault "DocumentId" json ""
+	frametext <- valFromObjDefault "FrameText" json ""
 	elements <- valFromObj "FrameData" >=> readJSONsSafe >=> mapM decodeFrameElement $ json
-	return $ RawFrame frameID frameType sentenceID source document elements
+	return $ RawFrame frameID frameType sentenceID source document frametext elements
 
 decodeFrameElement :: JSObject JSValue -> Result (Int, Int)
 decodeFrameElement json = do
