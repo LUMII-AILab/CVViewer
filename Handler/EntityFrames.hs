@@ -24,7 +24,7 @@ _getEntityFramesR summary nr = do
     let win = filterFrames ["Sasniegums"] frames
     let work = filterFrames ["Amats", "Darba sākums", "Darba beigas"] frames
     let others = frames \\ (bio ++ edu ++ win ++ work)
-    let sections = [(bio, "Personas dati, ģimenes stāvoklis"), (edu, "Izglīība"), (win, "Sasniegumi"), (work, "Karjera"), (others, "")] :: [([Frame], String)]
+    let sections = [(bio, "Personas dati, ģimenes stāvoklis"), (edu, "Izglītība"), (win, "Sasniegumi"), (work, "Karjera"), (others, "Cits")] :: [([Frame], String)]
     --liftIO $ putStrLn $ show $ (\(Frame _ _ _ _ _ x) -> x) $ bio !! 0
     --liftIO $ mapM_ (\(Frame _ _ _ _ _ x) -> putStrLn $ concat $ map (\(_,role,entityID, entity) -> "<br/>" ++ role ++ ": " ++ entity ++ "(" ++ show entityID ++ ")") x) bio
     defaultLayout $(widgetFile "entityframes")

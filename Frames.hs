@@ -20,7 +20,7 @@ describeFrame entityLookup (RawFrame frameID frameTypeID sentenceID source docum
 			else error "Bad frame type ID " ++ show frameTypeID -- TODO - graceful fail
 		elements = map (\(role, entityID) -> (role, fetchRole frameTypeID role, entityID, entityLookup entityID)) rawelements
 		description = (getDescriber frameTypeID) elements
-	in Frame frameID description frameType sentenceID source document (if frametext=="" then "Auto: "++description else frametext) elements
+	in Frame frameID description frameType sentenceID source document (if frametext=="" then "[x]: "++description else frametext) elements
 
 -- fetch the role name from IDs, including boundary checks
 fetchRole :: Int -> Int -> String

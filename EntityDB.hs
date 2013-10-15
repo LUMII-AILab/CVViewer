@@ -48,11 +48,14 @@ entityLookup entities entityID =
 	in Data.Map.findWithDefault "" entityID table
 
 fetchEntityDataByID :: [Int] -> IO [Entity]
-fetchEntityDataByID ids = do
-	json <- postRequest (serviceURL ++ "GetEntityDataByIdPg/" ++ user) 
-		("{\"entityIdList\":{\"DataSet\":[\"AllUsers\"],\"SearchType\":\"AllData\",\"EntityIdList\":["
-		++ (formatNumList ids) ++ "]}}")
-	return $ decodeEntities json
+fetchEntityDataByID ids = 
+	if null ids
+		then return []
+		else do
+			json <- postRequest (serviceURL ++ "GetEntityDataByIdPg/" ++ user) 
+				("{\"entityIdList\":{\"DataSet\":[\"AllUsers\"],\"SearchType\":\"AllData\",\"EntityIdList\":["
+				++ (formatNumList ids) ++ "]}}")
+			return $ decodeEntities json
 
 -- fetch a list of entity IDs matching the supplied names
 fetchEntityIDsByName :: [String] -> IO [Int]
@@ -65,7 +68,7 @@ fetchEntityIDsByName names = do
 decodeIDs :: String -> [Int]
 decodeIDs json =
 	case (decodeAnswers "EntityIdList" json) of
-		Ok answers -> head answers -- FIXME - assumes only one answer
+		Ok answers -> if null answers then [] else head answers -- FIXME - assumes only one answer
 		Error _ -> undefined -- FIXME - no error checking
 
 -- decodes the JSON answer with a list of entities
@@ -73,7 +76,7 @@ decodeEntities :: String -> [Entity]
 decodeEntities json = 
 	case (decodeAnswers "Entity" >=> mapM decodeEntity $ json) of
 		Ok answers -> answers
-		Error message -> error message -- FIXME - no error checking
+		Error message -> error $ "decodeEntities: " ++ message ++ "\n" ++ show json-- FIXME - no error checking
 
 -- decodes an entity list
 decodeEntity :: JSObject JSValue -> Result Entity
@@ -110,13 +113,13 @@ decodeFrameElement json = do
 
 -- decodes JSON answers to a list of separate answers. 
 -- NB! If there are any answers with errorcodes, they will be simply skipped..
-decodeAnswers :: (JSON a) => String -> String -> Result [a]
+decodeAnswers :: (JSON a, Show a) => String -> String -> Result [a]
 decodeAnswers resultFieldName json = 
 	case (decode json) of
 		Ok answers -> (liftM rights) ( (valFromObj "Answers") >=> readJSONsSafe >=> mapM (decodeAnswer resultFieldName) $ answers)
-		Error message -> Error message
+		Error message -> Error $ "decodeAnswers: " ++ message
 
-decodeAnswer :: (JSON a) => String -> JSObject JSValue -> Result (Either String a)
+decodeAnswer :: (JSON a, Show a) => String -> JSObject JSValue -> Result (Either String a)
 decodeAnswer resultFieldName answer = do
 	answerCode <- valFromObj "Answer" answer :: Result Int
 	answerString <- valFromObj "AnswerTypeString" answer

@@ -5,7 +5,7 @@
         <ul class="nav navbar-nav">
             <li class="active"><a href=@{HomeR}>_{MsgAppTitle}</a>
             <li><a href=@{EntityNameR}>Entītijas pēc vārda</a>
-            <li><a href=@{EntityFramesR 274418}>Freimi pēc ID</a>
+            <li><a href=@{EntityFramesR 131435}>Freimi pēc ID</a>
 
 <div class="container">
     $maybe msg <- mmsg

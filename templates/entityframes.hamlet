@@ -1,8 +1,18 @@
-<h1>#{name} <small>(#{nr})</small>
+<h1> #{name} <small>(#{nr})</small>
+$if summary
+    Apvienotie fakti: <a href=@{EntityRawFramesR nr}>uz dokumentu faktiem</a>
+$else
+    Dokumentu fakti: <a href=@{EntityFramesR nr}>uz apvienotajiem faktiem</a>
 
 $forall (section_frames, title) <- sections
     $if not $ null section_frames
         <h3>#{title}
         <ul>
           $forall (Frame id description frametype sentenceID source document frametext elements) <- section_frames
-            <li><span data-toggle="popover" title="#{frametype}, ID: #{id}" data-content="Avots: #{source}<br/>Dokuments: #{document}<br/>Teikuma ID: #{sentenceID}<br/>#{describeElements elements}<br/>#{description}"><a href="http://www.leta.lv/press_releases/#{document}">#{frametext}</a></span> <span class="glyphicon glyphicon-ok"></span> <span class="glyphicon glyphicon-remove"></span>
+            <li>
+                <span data-toggle="popover" title="#{frametype}, ID: #{id}" data-content="Avots: #{source}<br/>Dokuments: #{document}<br/>Teikuma ID: #{sentenceID}<br/>#{describeElements elements}<br/>#{description}">
+                    $if not $ null document
+                        <a href="http://bebrs.ailab.lv:7000/#/#{document}.json?n=#{sentenceID}">#{frametext}
+                    $else
+                        #{frametext}
+                <!-- <span class="glyphicon glyphicon-ok"></span> <span class="glyphicon glyphicon-remove"> -->
