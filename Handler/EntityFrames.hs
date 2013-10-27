@@ -19,7 +19,7 @@ _getEntityFramesR summary nr = do
     let name = entityName entities
     frames2 <- liftIO $ if summary then fetchSummaryFrames [nr] []
                                    else fetchFrames [nr] []
-    let frames = sortBy (comparing $ \(Frame _ _ _ _ _ _ _ x _) -> Down x) frames2 
+    let frames = sortBy (comparing $ \(Frame _ _ _ _ _ _ _ x _) -> -x) frames2 
     let bio = filterFrames ["Dzimšana","Miršana", "Attiecības"] frames
     let edu = filterFrames ["Izglītība"] frames
     let win = filterFrames ["Sasniegums"] frames
