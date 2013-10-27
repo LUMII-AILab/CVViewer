@@ -23,8 +23,11 @@ user = "PeterisP"
 
 -- Fetches all frames matching the supplied lists of entity IDs and frame type IDs
 fetchFrames :: [Int] -> [Int] -> IO [Frame]
-fetchFrames entityIDs frametypes = do
-	json <- postRequest (serviceURL ++ "GetFramePg/" ++ user) 
+fetchFrames = _fetchFrames "GetFramePg"
+-- helper
+_fetchFrames :: String -> [Int] -> [Int] -> IO [Frame]
+_fetchFrames apicall entityIDs frametypes = do
+	json <- postRequest (serviceURL ++ apicall ++ "/" ++ user) 
 		("{\"parameterList\":{\"QueryParameters\":[{\"EntityIdList\":[" ++ (formatNumList entityIDs) ++ 
 		 "],\"FrameTypes\": [" ++ (formatNumList frametypes) ++ "]}]}}")
 	let frames = decodeFrames json
@@ -34,13 +37,7 @@ fetchFrames entityIDs frametypes = do
 -- The same but for summary frames
 -- FIXME - DRY
 fetchSummaryFrames :: [Int] -> [Int] -> IO [Frame]
-fetchSummaryFrames entityIDs frametypes = do
-	json <- postRequest (serviceURL ++ "GetSummaryFramePg/" ++ user) 
-		("{\"parameterList\":{\"QueryParameters\":[{\"EntityIdList\":[" ++ (formatNumList entityIDs) ++ 
-		 "],\"FrameTypes\": [" ++ (formatNumList frametypes) ++ "]}]}}")
-	let frames = decodeFrames json
-	entities <- fetchEntityDataByID $ mentionedEntities frames
-	return $ map (describeFrame $ entityLookup entities) frames
+fetchSummaryFrames = _fetchFrames "GetSummaryFramePg"
 
 entityLookup :: [Entity] -> Int -> String
 entityLookup entities entityID = 
@@ -102,8 +99,9 @@ decodeFrame json = do
 	source <- valFromObjDefault "SourceId" json ""
 	document <- valFromObjDefault "DocumentId" json ""
 	frametext <- valFromObjDefault "FrameText" json ""
+	framecount <- valFromObjDefault "FrameCnt" json 0
 	elements <- valFromObj "FrameData" >=> readJSONsSafe >=> mapM decodeFrameElement $ json
-	return $ RawFrame frameID frameType sentenceID source document frametext elements
+	return $ RawFrame frameID frameType sentenceID source document frametext framecount elements
 
 decodeFrameElement :: JSObject JSValue -> Result (Int, Int)
 decodeFrameElement json = do

@@ -4,7 +4,8 @@ module Handler.EntityFrames where
 import Import hiding (Entity, entityID)
 import EntityDB
 import Frames
-import Data.List ( (\\) )
+import Data.List ( (\\), sortBy )
+import Data.Ord
 
 getEntityFramesR :: Int -> Handler Html
 getEntityFramesR = _getEntityFramesR True
@@ -18,7 +19,7 @@ _getEntityFramesR summary nr = do
     let name = entityName entities
     frames2 <- liftIO $ if summary then fetchSummaryFrames [nr] []
                                    else fetchFrames [nr] []
-    let frames = filter (\(Frame x _ _ _ _ _ _ _) -> notElem x [26164,63883, 26163, 26175, 26254, 45336]) frames2 --FIXME- jālabo šo freimu attēlošana un jāliek atpakaļ
+    let frames = sortBy (comparing $ \(Frame _ _ _ _ _ _ _ x _) -> Down x) frames2 
     let bio = filterFrames ["Dzimšana","Miršana", "Attiecības"] frames
     let edu = filterFrames ["Izglītība"] frames
     let win = filterFrames ["Sasniegums"] frames
@@ -38,4 +39,4 @@ describeElements =
  map (\(_,role,entityID, entity) -> preEscapedToMarkup $ "<br/>" ++ role ++ ": " ++ entity ++ "(" ++ show entityID ++ ")")
 
 filterFrames :: [String] -> [Frame] -> [Frame]
-filterFrames frameTypes = filter (\(Frame _ _ x _ _ _ _ _) -> elem x frameTypes)
+filterFrames frameTypes = filter (\(Frame _ _ x _ _ _ _ _ _) -> elem x frameTypes)
