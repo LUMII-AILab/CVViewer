@@ -36,7 +36,7 @@ entityName _ = ""
 
 describeElements :: [Element] -> [Html]
 describeElements =
- map (\(_,role,entityID, entity) -> preEscapedToMarkup $ "<br/>" ++ role ++ ": " ++ entity ++ "(" ++ show entityID ++ ")")
+ map (\(_,role,entityID, entity) -> (preEscapedToMarkup ("<br/>" :: String)) <> toHtml (role ++ ": " ++ entity ++ "(" ++ show entityID ++ ")"))
 
 filterFrames :: [String] -> [Frame] -> [Frame]
 filterFrames frameTypes = filter (\(Frame _ _ x _ _ _ _ _ _) -> elem x frameTypes)
