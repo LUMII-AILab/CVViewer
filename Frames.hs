@@ -19,7 +19,7 @@ describeFrame entityLookup (RawFrame frameID frameTypeID sentenceID source docum
 			then frameTypes !! frameTypeID
 			else error "Bad frame type ID " ++ show frameTypeID -- TODO - graceful fail
 		elements = map (\(role, entityID) -> (role, fetchRole frameTypeID role, entityID, entityLookup entityID)) rawelements
-		description = (getDescriber frameTypeID) elements
+		description = (describeDefault frameTypeID) elements
 	in Frame frameID description frameType sentenceID source document (if frametext=="" then "[x]: "++description else frametext) framecount elements
 
 -- fetch the role name from IDs, including boundary checks

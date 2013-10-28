@@ -10,7 +10,7 @@ $forall (section_frames, title) <- sections
         <ul>
           $forall (Frame id description frametype sentenceID source document frametext framecount elements) <- section_frames
             <li>
-                <span data-toggle="popover" title="#{frametype}, ID: #{id}" data-content="Avots: #{source}<br/>Dokuments: #{document}<br/>Teikuma ID: #{sentenceID}<br/>#{describeElements elements}<br/>#{description}">
+                <span data-toggle="popover" title="#{frametype}, ID: #{id}" data-content="Avots: #{source}<br/>Dokuments: #{document}<br/>Teikuma ID: #{sentenceID}<br/>#{describeElements elements}">
                     $if not $ null document
                         <a href="http://bebrs.ailab.lv:7000/#/#{document}.json?n=#{sentenceID}">
                             #{frametext} 
