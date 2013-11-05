@@ -17,7 +17,7 @@ describeFrame entityLookup (RawFrame frameID frameTypeID sentenceID source docum
 	let 		
 		frameType = if frameTypeID < length frameTypes
 			then frameTypes !! frameTypeID
-			else error "Bad frame type ID " ++ show frameTypeID -- TODO - graceful fail
+			else error $ "Bad frame type ID " ++ show frameTypeID -- TODO - graceful fail
 		elements = map (\(role, entityID) -> (role, fetchRole frameTypeID role, entityID, entityLookup entityID)) rawelements
 		description = (describeDefault frameTypeID) elements
 	in Frame frameID description frameType sentenceID source document (if frametext=="" then "[x]: "++description else frametext) framecount elements
@@ -41,37 +41,9 @@ fetchElement ((role, _, _, entity):xs) neededRole =
 fetchElement_ :: [Element] -> Int -> String
 fetchElement_ elements role = replaceAll (fromMaybe "" $ fetchElement elements role) replacements
 
-replacements :: [(String, String)]
+replacements :: [(String, String)]  -- FIXME - nav aktuāls, jo tagad DB ir gan locījumi, gan renderētie teksti
 replacements = [
-	("trešdiena vakars", "trešdienas vakarā"),
-	("Tukums 1. vidusskola", "Tukuma 1. vidusskolu"),
-	("maijs", "maijā"),
-	("decembris", "decembrī"),
-	("augusts", "augusta"),
-	("gads", "gadā"),
-	(">", ""),
-	("augsts literārs kurss", "augstākos literāros kursus"),
-	("un Goda diplomu", "Goda diplomu"),
-	("Latvija vēsture un filoloģija fakultāte", "Latvijas vēstures un filoloģijas fakultāti"),
-	("tauta dzejnieks gods nosaukums", "tautas dzejnieka goda nosaukumu"),
-	("arī 1991. gadā barikāde dalībnieks piemiņa zīme", "1991. gada barikāžu dalībnieka piemiņas zīmi"),
-	("2. šķira trīs zvaigzne ordenis", "2. šķiras trīs zvaigžņu ordeni"),
-	("ministrs kabinets balva par mūžs ieguldījums latvietis kultūra un izcils veikums latvietis literatūra", "MK balvu par mūža ieguldījumu latviešu kultūrā"),
-	("starptautiska atzinība Hanss Kristians Andersens vārds nosaukt pasaka meistars diploms", "Hansa Kristiana Andersena vārdā nosaukto pasaku meistara diplomu"),
-	("nopelns bagāts kultūra darbinieks nosaukums", "nopelniem bagātā kultūras darbinieka nosaukumu"),
-	("jūrmala 1. vidusskola", "Jūrmalas 1. vidusskolā"),
-	("Latvija kultūra fonds", "Latvijas kultūras fondā"),
-	("skolotājs", "skolotāju"),
-	("sekretārs", "sekretāru"),
-	("priekšsēdētājs", "priekšsēdētāju"),
-	("padomnieks", "padomnieku"),
-	("Latvija krājbanka", "Latvijas Krājbankā"),
-	("būt AP tauta izglītība", "bijis tautas izglītības AP"),
-	("būt", "bijis par"),
-	("Latvija tēls veidošana institūts", "Latvijas tēla veidošanas institūtā"),
-	("Hārvards universitāte", "Hārvardas universitāti"),
-	("valsts prezidente kanceleja vadītāju", "Valsts prezidentes kancelejas vadītājs"),
-	("Rīga apriņķis sloka pagasts Ragaciems", "Rīgas apriņķa Slokas pagasta Ragaciemā")]
+	("trešdiena vakars", "trešdienas vakarā")]
 
 type FrameTypeDescriber = [Element] -> String -- TODO - uz html? lai entītijas ir kā korekti urļi
 -- gets the decoding function for each frame type
@@ -206,7 +178,8 @@ frameRoles = [
 	["Dalībnieks", "Sasniegums", "Sacensības", "Rezultāts", "Rangs", "Laiks", "Vieta", "Organizētājs", "Pretinieks"],
 	["Avots", "Autors", "Ziņa", "Laiks"],
 	["Iepircējs", "Tēma", "Paredzētā_Summa", "Pretendenti", "Uzvarētājs", "Rezultāts", "Laiks"],
-	["Zīmols", "Organizācija", "Produkts"]]
+	["Zīmols", "Organizācija", "Produkts"],
+	["Entītija","Īpašība"]]
 
 frameTypes :: [String]
 frameTypes = [
@@ -235,7 +208,8 @@ frameTypes = [
 	"Sasniegums",
 	"Ziņošana",
 	"Publisks iepirkums",
-	"Zīmols"]
+	"Zīmols",
+	"Nestrukturēts"]
 
 -- String replace - call as:
 -- replace somestring [("a","b")]
