@@ -6,7 +6,7 @@ import EntityDB
 
 getHomeR :: Handler Html
 getHomeR = do
-    results <- liftIO $ fetchEntityDataByID $ [131426..131475] ++ [1002911,1002884] ++ [1003759..1003786]
+    results <- liftIO $ fetchEntityDataByID $ [1248014..1248021] ++ [131426..131475] ++ [1002911,1002884] ++ [1003759..1003786]
     let entities = map (\(Entity nr _ names) -> (mainName names, nr)) results
     defaultLayout $(widgetFile "entityname")
 

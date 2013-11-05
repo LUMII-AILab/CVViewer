@@ -11,7 +11,7 @@ import Yesod.Default.Main
 import Yesod.Default.Handlers
 import Network.Wai.Middleware.RequestLogger
 import Network.HTTP.Conduit (newManager, def)
-import System.IO (stdout)
+import System.IO (stdout, hSetEncoding, utf8)
 import System.Log.FastLogger (mkLogger)
 
 -- Import all relevant handler modules here.
@@ -31,6 +31,7 @@ mkYesodDispatch "App" resourcesApp
 -- migrations handled by Yesod.
 makeApplication :: AppConfig DefaultEnv Extra -> IO Application
 makeApplication conf = do
+    hSetEncoding stdout utf8
     foundation <- makeFoundation conf
 
     -- Initialize the logging middleware
