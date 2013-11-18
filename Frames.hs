@@ -179,7 +179,7 @@ frameRoles = [
 	["Avots", "Autors", "Ziņa", "Laiks"],
 	["Iepircējs", "Tēma", "Paredzētā_Summa", "Pretendenti", "Uzvarētājs", "Rezultāts", "Laiks"],
 	["Zīmols", "Organizācija", "Produkts"],
-	["Entītija","Īpašība"]]
+	["Entītija","Īpašība","Kategorija"]]
 
 frameTypes :: [String]
 frameTypes = [
